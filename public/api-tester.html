@@ -275,6 +275,16 @@
 
             <div id="analyticsResponse" class="response" style="display: none;"></div>
         </div>
+
+        <div class="section">
+            <h2>🤖 AI-Powered Recommendations</h2>
+            <button type="button" class="analytics-btn" onclick="fetchRecommendations()">Get AI Recommendations</button>
+            <p style="margin-top: 10px; color: #666; font-size: 14px;">
+                Get intelligent product recommendations based on sales data and weather conditions.
+            </p>
+
+            <div id="recommendationsResponse" class="response" style="display: none;"></div>
+        </div>
     </div>
 
     <!-- Include Pusher JS and Laravel Echo from CDN -->
@@ -459,6 +469,30 @@
                 clearInterval(autoRefreshInterval);
                 autoRefreshInterval = null;
                 alert('Auto-refresh stopped.');
+            }
+        }
+
+        // Fetch AI-powered recommendations
+        async function fetchRecommendations() {
+            try {
+                const response = await fetch(`${baseUrl}/api/recommendations`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+                const responseDiv = document.getElementById('recommendationsResponse');
+
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = JSON.stringify(result, null, 2);
+                responseDiv.className = response.ok ? 'response info' : 'response error';
+
+            } catch (error) {
+                const responseDiv = document.getElementById('recommendationsResponse');
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = `Error: ${error.message}`;
+                responseDiv.className = 'response error';
             }
         }        // WebSocket Functions using Laravel Echo with fallback
         function connectWebSocket() {

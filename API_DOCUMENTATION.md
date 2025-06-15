@@ -189,6 +189,69 @@ Returns real-time sales insights and analytics.
 - **Last Minute Orders**: Number of orders placed in the last 60 seconds
 - **Revenue Change**: Comparison with the previous minute
 
+### 3. Get AI-Powered Recommendations
+**GET** `/api/recommendations`
+
+Returns intelligent product recommendations based on sales data analysis and weather conditions.
+
+**Response (200):**
+```json
+{
+    "success": true,
+    "data": {
+        "sales_analysis": {
+            "period": {
+                "start": "2025-06-08T09:09:35.217573Z",
+                "end": "2025-06-15T09:09:35.217573Z"
+            },
+            "summary": {
+                "total_revenue": 3456.87,
+                "total_orders": 19,
+                "avg_order_value": 181.94
+            },
+            "top_products": [...],
+            "low_performing_products": [...],
+            "hourly_trends": [...]
+        },
+        "weather_info": {
+            "temperature": 35,
+            "feels_like": 30,
+            "humidity": 53,
+            "description": "clear",
+            "season": "summer",
+            "source": "mock"
+        },
+        "ai_recommendations": [
+            {
+                "type": "promote_bestseller",
+                "priority": "high",
+                "action": "Increase marketing budget for 'Laptop Pro 15\"' as it's generating the highest revenue",
+                "expected_impact": "Revenue increase of 15-25%",
+                "reasoning": "Top-performing product with proven market demand"
+            }
+        ],
+        "weather_based_suggestions": [
+            {
+                "trigger": "hot_weather",
+                "temperature": 35,
+                "products": ["Bluetooth Speaker", "Tablet Air"],
+                "action": "Promote portable electronics for outdoor activities",
+                "discount_suggestion": "15% off summer electronics bundle"
+            }
+        ],
+        "pricing_recommendations": [...],
+        "strategic_actions": [...]
+    }
+}
+```
+
+**Recommendations Include:**
+- **Sales Analysis**: Comprehensive analysis of recent sales patterns
+- **Weather Integration**: Weather-based product suggestions with OpenWeather API
+- **AI Recommendations**: Intelligent marketing and promotion suggestions
+- **Dynamic Pricing**: AI-suggested pricing based on demand and weather
+- **Strategic Actions**: Business strategy recommendations for growth
+
 ## Error Responses
 
 **Validation Error (422):**
@@ -228,6 +291,11 @@ curl -X POST http://localhost:8000/api/orders \
 ### Get Analytics
 ```bash
 curl -X GET http://localhost:8000/api/analytics
+```
+
+### Get AI Recommendations
+```bash
+curl -X GET http://localhost:8000/api/recommendations
 ```
 
 ## Available Products (Seeded)

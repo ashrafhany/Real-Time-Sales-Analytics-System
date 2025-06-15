@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\RecommendationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +13,7 @@ Route::get('/user', function (Request $request) {
 // Sales Management APIs
 Route::post('/orders', [OrderController::class, 'store']);
 Route::get('/analytics', [AnalyticsController::class, 'index']);
+Route::get('/recommendations', [RecommendationController::class, 'index']);
 
 // Test route for WebSocket broadcasting
 Route::get('/test-broadcast', function () {
