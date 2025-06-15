@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo Connection Debug</title>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
+</head>
+<body>
+    <h1>Echo Connection Debug</h1>
+    <div id="log"></div>
+
+    <script>
+        function log(message) {
+            const div = document.getElementById('log');
+            div.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${message}</div>`;
+        }
+
+        // Test 1: Try with minimal config
+        log('Starting Echo connection test...');
+
+        try {
+            window.Pusher = Pusher;
+
+            const echo = new Echo({
+                broadcaster: 'pusher',
+                key: 'local-sales-key',
+                wsHost: 'localhost',
+                wsPort: 8080,
+                forceTLS: false,
+                enabledTransports: ['ws'],
+                cluster: '',
+                disableStats: true,
+            });
+
+            log('Echo initialized');
+
+            // Test connection events
+            if (echo.connector && echo.connector.pusher) {
+                log('Echo connector found');
+
+                echo.connector.pusher.connection.bind('connecting', () => {
+                    log('Pusher: Connecting...');
+                });
+
+                echo.connector.pusher.connection.bind('connected', () => {
+                    log('Pusher: Connected!');
+
+                    // Try to subscribe to channel
+                    const channel = echo.channel('sales-data');
+                    log('Subscribed to sales-data channel');
+
+                    channel.listen('new-order', (data) => {
+                        log('Received new-order event: ' + JSON.stringify(data));
+                    });
+                });
+
+                echo.connector.pusher.connection.bind('disconnected', () => {
+                    log('Pusher: Disconnected');
+                });
+
+                echo.connector.pusher.connection.bind('error', (error) => {
+                    log('Pusher Error: ' + JSON.stringify(error));
+                });
+
+                echo.connector.pusher.connection.bind('unavailable', () => {
+                    log('Pusher: Unavailable');
+                });
+
+                echo.connector.pusher.connection.bind('failed', () => {
+                    log('Pusher: Failed');
+                });
+            } else {
+                log('Echo connector not found');
+            }
+
+        } catch (error) {
+            log('Error: ' + error.message);
+        }
+    </script>
+</body>
+</html>

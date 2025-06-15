@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Data Management System - API Tester</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .section h2 {
+            color: #444;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .analytics-btn {
+            background-color: #28a745;
+        }
+        .analytics-btn:hover {
+            background-color: #1e7e34;
+        }
+        .response {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .products-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .product-card {
+            background: white;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .product-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 5px rgba(0,123,255,0.2);
+        }
+        .product-card.selected {
+            border-color: #007bff;
+            background-color: #e7f3ff;
+        }
+        .product-name {
+            font-weight: bold;
+            color: #333;
+        }
+        .product-price {
+            color: #28a745;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .websocket-status {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .websocket-status.connected {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .websocket-status.disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .websocket-status.connecting {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .connected .status-indicator {
+            background-color: #28a745;
+        }
+        .disconnected .status-indicator {
+            background-color: #dc3545;
+        }
+        .connecting .status-indicator {
+            background-color: #ffc107;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .notifications-panel {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            padding: 15px;
+        }
+        .notifications-panel h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        #notificationsList {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+        .notification-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border-left: 4px solid;
+            font-size: 14px;
+        }
+        .notification-item.order {
+            background-color: #e7f3ff;
+            border-left-color: #007bff;
+        }
+        .notification-item.analytics {
+            background-color: #e8f5e8;
+            border-left-color: #28a745;
+        }
+        .notification-time {
+            font-size: 12px;
+            color: #666;
+            float: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛒 Sales Data Management System - API Tester</h1>
+
+        <div class="section">
+            <h2>🔴 Real-time WebSocket Status</h2>
+            <div id="websocketStatus" class="websocket-status disconnected">
+                <span class="status-indicator"></span>
+                <span class="status-text">Disconnected</span>
+            </div>
+            <button type="button" onclick="connectWebSocket()">Connect WebSocket</button>
+            <button type="button" onclick="disconnectWebSocket()">Disconnect WebSocket</button>
+            <button type="button" onclick="testBroadcast()">Test Broadcast</button>
+
+            <div id="realtimeNotifications" class="notifications-panel">
+                <h3>📢 Real-time Notifications</h3>
+                <div id="notificationsList">
+                    <!-- Real-time notifications will appear here -->
+                </div>
+                <button type="button" onclick="clearNotifications()">Clear Notifications</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📦 Available Products</h2>
+            <p>Click on a product to auto-fill the order form:</p>
+            <div class="products-list" id="productsList">
+                <!-- Products will be loaded here -->
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🛍️ Create New Order</h2>
+            <form id="orderForm">
+                <div class="form-group">
+                    <label for="productId">Product ID:</label>
+                    <input type="number" id="productId" name="product_id" required min="1">
+                </div>
+
+                <div class="form-group">
+                    <label for="quantity">Quantity:</label>
+                    <input type="number" id="quantity" name="quantity" required min="1" value="1">
+                </div>
+
+                <div class="form-group">
+                    <label for="price">Price per unit:</label>
+                    <input type="number" id="price" name="price" step="0.01" required min="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="date">Order Date (optional):</label>
+                    <input type="datetime-local" id="date" name="date">
+                </div>
+
+                <button type="submit">Create Order</button>
+            </form>
+
+            <div id="orderResponse" class="response" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Real-time Analytics</h2>
+            <button type="button" class="analytics-btn" onclick="fetchAnalytics()">Get Analytics</button>
+            <button type="button" onclick="startAutoRefresh()">Start Auto-refresh (10s)</button>
+            <button type="button" onclick="stopAutoRefresh()">Stop Auto-refresh</button>
+
+            <div id="analyticsResponse" class="response" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Include Pusher JS and Laravel Echo from CDN -->
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
+
+    <script>
+        // Check if libraries are loaded
+        function checkLibraries() {
+            if (typeof Pusher === 'undefined') {
+                addNotification('🚨 Pusher library not loaded', 'error');
+                return false;
+            }
+            if (typeof Echo === 'undefined') {
+                addNotification('🚨 Laravel Echo library not loaded', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        const baseUrl = window.location.origin;
+        let autoRefreshInterval = null;
+        let products = [];
+        let echo = null;
+        let isWebSocketConnected = false;
+
+        // WebSocket configuration for Laravel Echo
+        const echoConfig = {
+            broadcaster: 'pusher',
+            key: 'local-sales-key',
+            wsHost: 'localhost',
+            wsPort: 8080,
+            wssPort: 8080,
+            forceTLS: false,
+            enabledTransports: ['ws', 'wss'],
+            cluster: '', // Remove cluster for Reverb
+            disableStats: true, // Disable pusher stats
+        };
+
+        // Sample products data
+        const sampleProducts = [
+            { id: 1, name: "Laptop Pro 15\"", price: 1299.99, description: "High-performance laptop" },
+            { id: 2, name: "Wireless Headphones", price: 199.99, description: "Noise-cancelling headphones" },
+            { id: 3, name: "Smartphone X", price: 699.99, description: "Latest smartphone" },
+            { id: 4, name: "Gaming Mouse", price: 79.99, description: "RGB gaming mouse" },
+            { id: 5, name: "Mechanical Keyboard", price: 129.99, description: "Cherry MX switches" },
+            { id: 6, name: "4K Monitor", price: 399.99, description: "27-inch 4K monitor" },
+            { id: 7, name: "Bluetooth Speaker", price: 59.99, description: "Portable speaker" },
+            { id: 8, name: "Tablet Air", price: 549.99, description: "10.9-inch tablet" }
+        ];
+
+        // Load products on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProducts();
+
+            // Set current datetime
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('date').value = now.toISOString().slice(0, 16);
+        });
+
+        function loadProducts() {
+            const productsList = document.getElementById('productsList');
+            productsList.innerHTML = '';
+
+            sampleProducts.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                productCard.onclick = () => selectProduct(product);
+
+                productCard.innerHTML = `
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-price">$${product.price}</div>
+                    <div style="color: #666; font-size: 14px;">${product.description}</div>
+                    <div style="color: #999; font-size: 12px; margin-top: 5px;">ID: ${product.id}</div>
+                `;
+
+                productsList.appendChild(productCard);
+            });
+        }
+
+        function selectProduct(product) {
+            // Remove previous selection
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Select current product
+            event.currentTarget.classList.add('selected');
+
+            // Fill form
+            document.getElementById('productId').value = product.id;
+            document.getElementById('price').value = product.price;
+        }
+
+        // Handle order form submission
+        document.getElementById('orderForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const data = {
+                product_id: parseInt(formData.get('product_id')),
+                quantity: parseInt(formData.get('quantity')),
+                price: parseFloat(formData.get('price'))
+            };
+
+            if (formData.get('date')) {
+                data.date = formData.get('date');
+            }
+
+            try {
+                const response = await fetch(`${baseUrl}/api/orders`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                const responseDiv = document.getElementById('orderResponse');
+
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = JSON.stringify(result, null, 2);
+                responseDiv.className = response.ok ? 'response success' : 'response error';
+
+                if (response.ok) {
+                    // Reset form
+                    document.getElementById('orderForm').reset();
+                    document.getElementById('date').value = new Date().toISOString().slice(0, 16);
+                    document.querySelectorAll('.product-card').forEach(card => {
+                        card.classList.remove('selected');
+                    });
+                }
+
+            } catch (error) {
+                const responseDiv = document.getElementById('orderResponse');
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = `Error: ${error.message}`;
+                responseDiv.className = 'response error';
+            }
+        });
+
+        // Fetch analytics
+        async function fetchAnalytics() {
+            try {
+                const response = await fetch(`${baseUrl}/api/analytics`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+                const responseDiv = document.getElementById('analyticsResponse');
+
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = JSON.stringify(result, null, 2);
+                responseDiv.className = response.ok ? 'response info' : 'response error';
+
+            } catch (error) {
+                const responseDiv = document.getElementById('analyticsResponse');
+                responseDiv.style.display = 'block';
+                responseDiv.textContent = `Error: ${error.message}`;
+                responseDiv.className = 'response error';
+            }
+        }
+
+        function startAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+
+            autoRefreshInterval = setInterval(fetchAnalytics, 10000);
+            fetchAnalytics(); // Fetch immediately
+
+            alert('Auto-refresh started! Analytics will update every 10 seconds.');
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                alert('Auto-refresh stopped.');
+            }
+        }        // WebSocket Functions using Laravel Echo with fallback
+        function connectWebSocket() {
+            if (isWebSocketConnected) {
+                addNotification('WebSocket is already connected', 'info');
+                return;
+            }
+
+            updateWebSocketStatus('connecting', 'Connecting...');
+            addNotification('Attempting to connect to WebSocket server...', 'info');
+
+            // Try Laravel Echo first, then fallback to native WebSocket
+            try {
+                connectWithEcho();
+            } catch (error) {
+                addNotification('Echo failed, trying native WebSocket...', 'info');
+                connectWithNativeWebSocket();
+            }
+        }
+
+        function connectWithEcho() {
+            if (!checkLibraries()) {
+                throw new Error('Required libraries not loaded');
+            }
+
+            try {
+                // Use native Pusher instead of Echo for better compatibility
+                addNotification('🔧 Initializing native Pusher connection...', 'info');
+
+                window.Pusher = Pusher;
+
+                const pusher = new Pusher('local-sales-key', {
+                    wsHost: 'localhost',
+                    wsPort: 8080,
+                    wssPort: 8080,
+                    forceTLS: false,
+                    enabledTransports: ['ws'],
+                    cluster: '',
+                    disableStats: true,
+                });
+
+                addNotification('✅ Pusher initialized, waiting for connection...', 'info');
+
+                // Listen for connection events
+                pusher.connection.bind('connected', function() {
+                    isWebSocketConnected = true;
+                    updateWebSocketStatus('connected', 'Connected (Pusher)');
+                    addNotification('✅ WebSocket connected successfully with Pusher!', 'success');
+
+                    // Subscribe to the sales-data channel
+                    const channel = pusher.subscribe('sales-data');
+
+                    // Listen for events
+                    channel.bind('new-order', function(data) {
+                        console.log('New order received:', data);
+                        const orderData = data.order;
+                        const message = `🛍️ New Order #${orderData.id}: ${orderData.quantity}x ${orderData.product_name} - $${orderData.total}`;
+                        addNotification(message, 'order');
+
+                        // Auto-refresh analytics if visible
+                        if (document.getElementById('analyticsResponse').style.display !== 'none') {
+                            setTimeout(() => fetchAnalytics(), 500);
+                        }
+                    });
+
+                    channel.bind('analytics-updated', function(data) {
+                        console.log('Analytics updated:', data);
+                        const analytics = data.analytics;
+                        const message = `📊 Analytics Updated: Total Revenue: $${analytics.total_revenue}, Recent Orders: ${analytics.last_minute_analytics.orders_count}`;
+                        addNotification(message, 'analytics');
+
+                        // Auto-update analytics display if visible
+                        if (document.getElementById('analyticsResponse').style.display !== 'none') {
+                            const responseDiv = document.getElementById('analyticsResponse');
+                            responseDiv.textContent = JSON.stringify({
+                                success: true,
+                                data: analytics,
+                                realtime: true
+                            }, null, 2);
+                            responseDiv.className = 'response info';
+                        }
+                    });
+
+                    channel.bind('pusher:subscription_succeeded', function() {
+                        addNotification('✅ Successfully subscribed to sales-data channel', 'success');
+                    });
+
+                    channel.bind('pusher:subscription_error', function(err) {
+                        addNotification('✗ Subscription error: ' + JSON.stringify(err), 'error');
+                    });
+                });
+
+                pusher.connection.bind('disconnected', function() {
+                    isWebSocketConnected = false;
+                    updateWebSocketStatus('disconnected', 'Disconnected');
+                    addNotification('❌ WebSocket connection closed', 'error');
+                });
+
+                pusher.connection.bind('error', function(error) {
+                    isWebSocketConnected = false;
+                    updateWebSocketStatus('disconnected', 'Connection Error');
+                    addNotification('🚨 WebSocket error: ' + JSON.stringify(error), 'error');
+                });
+
+                pusher.connection.bind('unavailable', function() {
+                    addNotification('🚨 WebSocket server unavailable', 'error');
+                    isWebSocketConnected = false;
+                    updateWebSocketStatus('disconnected', 'Server Unavailable');
+                });
+
+                pusher.connection.bind('failed', function() {
+                    addNotification('🚨 WebSocket connection failed', 'error');
+                    isWebSocketConnected = false;
+                    updateWebSocketStatus('disconnected', 'Connection Failed');
+                });
+
+                // Store pusher instance globally for disconnection
+                window.pusherInstance = pusher;
+
+            } catch (error) {
+                addNotification('🚨 Pusher failed: ' + error.message, 'error');
+                console.error('Pusher error:', error);
+                throw error;
+            }
+        }
+
+        function connectWithNativeWebSocket() {
+            try {
+                const wsUrl = `ws://localhost:8080/app/local-sales-key?protocol=7&client=js&version=8.0.0&flash=false`;
+                const websocket = new WebSocket(wsUrl);
+
+                websocket.onopen = function(event) {
+                    isWebSocketConnected = true;
+                    updateWebSocketStatus('connected', 'Connected (Native)');
+                    addNotification('✅ WebSocket connected with native implementation!', 'success');
+
+                    // Subscribe to the sales-data channel
+                    const subscribeMessage = {
+                        event: 'pusher:subscribe',
+                        data: {
+                            channel: 'sales-data'
+                        }
+                    };
+                    websocket.send(JSON.stringify(subscribeMessage));
+                    addNotification('📡 Subscribed to sales-data channel', 'info');
+                };
+
+                websocket.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleNativeWebSocketMessage(data);
+                    } catch (e) {
+                        console.error('Error parsing WebSocket message:', e);
+                    }
+                };
+
+                websocket.onclose = function(event) {
+                    isWebSocketConnected = false;
+                    updateWebSocketStatus('disconnected', 'Disconnected');
+                    addNotification('❌ Native WebSocket connection closed', 'error');
+                };
+
+                websocket.onerror = function(error) {
+                    isWebSocketConnected = false;
+                    updateWebSocketStatus('disconnected', 'Connection Error');
+                    addNotification('🚨 Native WebSocket error: ' + error.message, 'error');
+                };
+
+                // Store websocket for disconnect function
+                window.nativeWebSocket = websocket;
+
+            } catch (error) {
+                updateWebSocketStatus('disconnected', 'Connection Failed');
+                addNotification('🚨 Failed to connect with native WebSocket: ' + error.message, 'error');
+                console.error('Native WebSocket connection error:', error);
+            }
+        }
+
+        function handleNativeWebSocketMessage(data) {
+            console.log('Native WebSocket message received:', data);
+
+            if (data.event === 'pusher:subscription_succeeded') {
+                addNotification('✅ Successfully subscribed to sales-data channel', 'success');
+                return;
+            }
+
+            if (data.event === 'new-order' && data.data) {
+                const orderData = data.data;
+                const message = `🛍️ New Order #${orderData.order.id}: ${orderData.order.quantity}x ${orderData.order.product_name} - $${orderData.order.total}`;
+                addNotification(message, 'order');
+
+                // Optionally auto-refresh analytics when new order comes in
+                if (document.getElementById('analyticsResponse').style.display !== 'none') {
+                    setTimeout(() => fetchAnalytics(), 500);
+                }
+            }
+
+            if (data.event === 'analytics-updated' && data.data) {
+                const analytics = data.data.analytics;
+                const message = `📊 Analytics Updated: Total Revenue: $${analytics.total_revenue}, Recent Orders: ${analytics.last_minute_analytics.orders_count}`;
+                addNotification(message, 'analytics');
+
+                // Auto-update the analytics display if it's visible
+                if (document.getElementById('analyticsResponse').style.display !== 'none') {
+                    const responseDiv = document.getElementById('analyticsResponse');
+                    responseDiv.textContent = JSON.stringify({
+                        success: true,
+                        data: analytics,
+                        realtime: true
+                    }, null, 2);
+                    responseDiv.className = 'response info';
+                }
+            }
+        }
+
+        function disconnectWebSocket() {
+            if (window.pusherInstance && isWebSocketConnected) {
+                window.pusherInstance.disconnect();
+                window.pusherInstance = null;
+            }
+
+            if (echo && isWebSocketConnected) {
+                echo.disconnect();
+                echo = null;
+            }
+
+            if (window.nativeWebSocket && window.nativeWebSocket.readyState === WebSocket.OPEN) {
+                window.nativeWebSocket.close();
+                window.nativeWebSocket = null;
+            }
+
+            if (isWebSocketConnected) {
+                isWebSocketConnected = false;
+                updateWebSocketStatus('disconnected', 'Disconnected');
+                addNotification('🔌 WebSocket disconnected manually', 'info');
+            } else {
+                addNotification('WebSocket is not connected', 'info');
+            }
+        }
+
+        function subscribeToSalesEvents() {
+            if (!echo) {
+                addNotification('🚨 Echo not initialized', 'error');
+                return;
+            }
+
+            // Subscribe to the sales-data channel
+            const channel = echo.channel('sales-data');
+
+            // Listen for new order events
+            channel.listen('new-order', (data) => {
+                console.log('New order received:', data);
+                const orderData = data.order;
+                const message = `🛍️ New Order #${orderData.id}: ${orderData.quantity}x ${orderData.product_name} - $${orderData.total}`;
+                addNotification(message, 'order');
+
+                // Optionally auto-refresh analytics when new order comes in
+                if (document.getElementById('analyticsResponse').style.display !== 'none') {
+                    setTimeout(() => fetchAnalytics(), 500); // Small delay to ensure DB is updated
+                }
+            });
+
+            // Listen for analytics updates
+            channel.listen('analytics-updated', (data) => {
+                console.log('Analytics updated:', data);
+                const analytics = data.analytics;
+                const message = `📊 Analytics Updated: Total Revenue: $${analytics.total_revenue}, Recent Orders: ${analytics.last_minute_analytics.orders_count}`;
+                addNotification(message, 'analytics');
+
+                // Auto-update the analytics display if it's visible
+                if (document.getElementById('analyticsResponse').style.display !== 'none') {
+                    const responseDiv = document.getElementById('analyticsResponse');
+                    responseDiv.textContent = JSON.stringify({
+                        success: true,
+                        data: analytics,
+                        realtime: true
+                    }, null, 2);
+                    responseDiv.className = 'response info';
+                }
+            });
+
+            addNotification('📡 Subscribed to sales-data channel for real-time updates', 'success');
+        }
+
+        function updateWebSocketStatus(status, text) {
+            const statusElement = document.getElementById('websocketStatus');
+            const statusText = statusElement.querySelector('.status-text');
+
+            statusElement.className = `websocket-status ${status}`;
+            statusText.textContent = text;
+        }
+
+        function addNotification(message, type = 'info') {
+            const notificationsList = document.getElementById('notificationsList');
+            const notification = document.createElement('div');
+            notification.className = `notification-item ${type}`;
+
+            const timestamp = new Date().toLocaleTimeString();
+            notification.innerHTML = `
+                <span class="notification-time">${timestamp}</span>
+                <div>${message}</div>
+            `;
+
+            notificationsList.insertBefore(notification, notificationsList.firstChild);
+
+            // Keep only the last 20 notifications
+            while (notificationsList.children.length > 20) {
+                notificationsList.removeChild(notificationsList.lastChild);
+            }
+
+            // Auto-scroll to top to show latest notification
+            notificationsList.scrollTop = 0;
+        }
+
+        function clearNotifications() {
+            document.getElementById('notificationsList').innerHTML = '';
+            addNotification('🧹 Notifications cleared', 'info');
+        }
+
+        async function testBroadcast() {
+            try {
+                addNotification('🧪 Testing broadcast...', 'info');
+                const response = await fetch(`${baseUrl}/api/test-broadcast`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    addNotification('✅ Test broadcast sent successfully!', 'success');
+                } else {
+                    addNotification('❌ Test broadcast failed: ' + result.message, 'error');
+                }
+            } catch (error) {
+                addNotification('🚨 Test broadcast error: ' + error.message, 'error');
+            }
+        }
+
+        // Auto-connect WebSocket on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Delay connection slightly to ensure page is fully loaded
+            setTimeout(() => {
+                addNotification('🚀 Page loaded - Ready for WebSocket connection', 'info');
+            }, 500);
+        });
+    </script>
+</body>
+</html>

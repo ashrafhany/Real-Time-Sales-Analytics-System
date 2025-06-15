@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple WebSocket Test</title>
+</head>
+<body>
+    <h1>Simple WebSocket Test</h1>
+    <div id="status">Not connected</div>
+    <button onclick="connect()">Connect</button>
+    <button onclick="disconnect()">Disconnect</button>
+    <div id="messages"></div>
+
+    <script>
+        let ws = null;
+
+        function connect() {
+            const statusDiv = document.getElementById('status');
+            const messagesDiv = document.getElementById('messages');
+
+            try {
+                ws = new WebSocket('ws://localhost:8080/app/local-sales-key?protocol=7&client=js&version=8.0.0&flash=false');
+
+                ws.onopen = function(event) {
+                    statusDiv.textContent = 'Connected!';
+                    statusDiv.style.color = 'green';
+                    messagesDiv.innerHTML += '<div>Connection opened</div>';
+
+                    // Subscribe to channel
+                    ws.send(JSON.stringify({
+                        event: 'pusher:subscribe',
+                        data: { channel: 'sales-data' }
+                    }));
+                };
+
+                ws.onmessage = function(event) {
+                    messagesDiv.innerHTML += '<div>Message: ' + event.data + '</div>';
+                };
+
+                ws.onclose = function(event) {
+                    statusDiv.textContent = 'Disconnected';
+                    statusDiv.style.color = 'red';
+                    messagesDiv.innerHTML += '<div>Connection closed</div>';
+                };
+
+                ws.onerror = function(error) {
+                    statusDiv.textContent = 'Error: ' + error.message;
+                    statusDiv.style.color = 'red';
+                    messagesDiv.innerHTML += '<div>Error: ' + error.message + '</div>';
+                };
+
+            } catch (error) {
+                statusDiv.textContent = 'Failed to connect: ' + error.message;
+                statusDiv.style.color = 'red';
+            }
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+    </script>
+</body>
+</html>
