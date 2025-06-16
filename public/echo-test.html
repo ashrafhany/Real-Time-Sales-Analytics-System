@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo WebSocket Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.15.3/dist/echo.iife.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pusher-js@8.3.0/dist/web/pusher.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .buttons {
+            margin: 15px 0;
+        }
+        button {
+            padding: 8px 15px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #connect {
+            background-color: #28a745;
+            color: white;
+        }
+        #disconnect {
+            background-color: #dc3545;
+            color: white;
+        }
+        #testEvent {
+            background-color: #007bff;
+            color: white;
+        }
+        #messages {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+        }
+        .message {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .event {
+            color: #0d6efd;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Real-Time Sales Analytics WebSocket Test</h1>
+
+        <div id="statusIndicator" class="status disconnected">
+            Status: Not connected
+        </div>
+
+        <div class="buttons">
+            <button id="connect" onclick="connectEcho()">Connect</button>
+            <button id="disconnect" onclick="disconnectEcho()">Disconnect</button>
+            <button id="testEvent" onclick="testEvent()">Send Test Event</button>
+        </div>
+
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        let echo = null;
+        let statusIndicator = document.getElementById('statusIndicator');
+        let messagesDiv = document.getElementById('messages');
+
+        function addMessage(message, type = 'info') {
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${type}`;
+            messageElement.innerHTML = message;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function connectEcho() {
+            try {
+                if (echo) {
+                    addMessage('Already connected or connecting. Disconnect first.', 'warning');
+                    return;
+                }
+
+                addMessage('Connecting to WebSocket server...');
+                  // Initialize Laravel Echo
+                echo = new Echo({
+                    broadcaster: 'pusher',
+                    key: 'local-sales-key',
+                    wsHost: window.location.hostname,
+                    wsPort: 8080,
+                    forceTLS: false,
+                    disableStats: true,
+                    enabledTransports: ['ws'],
+                    authEndpoint: '/broadcasting/auth',
+                    cluster: 'mt1',
+                    encrypted: false
+                });
+
+                // Listen for connection events
+                echo.connector.pusher.connection.bind('connected', () => {
+                    statusIndicator.className = 'status connected';
+                    statusIndicator.textContent = 'Status: Connected!';
+                    addMessage('Successfully connected to WebSocket server!');
+                });
+
+                echo.connector.pusher.connection.bind('disconnected', () => {
+                    statusIndicator.className = 'status disconnected';
+                    statusIndicator.textContent = 'Status: Disconnected';
+                    addMessage('Disconnected from WebSocket server');
+                });
+
+                echo.connector.pusher.connection.bind('error', (err) => {
+                    statusIndicator.className = 'status disconnected';
+                    statusIndicator.textContent = 'Status: Error connecting';
+                    addMessage(`Connection error: ${JSON.stringify(err)}`, 'error');
+                });
+
+                // Subscribe to the sales-data channel
+                echo.channel('sales-data')
+                    .listen('analytics-updated', (event) => {
+                        addMessage(`<span class="event">analytics-updated event received:</span> ${JSON.stringify(event)}`, 'event');
+                    });
+
+                addMessage('Channel subscription initialized for "sales-data"');
+
+            } catch (error) {
+                statusIndicator.className = 'status disconnected';
+                statusIndicator.textContent = 'Status: Failed to connect';
+                addMessage(`Error initializing connection: ${error.message}`, 'error');
+                console.error('Connection initialization error:', error);
+            }
+        }
+
+        function disconnectEcho() {
+            if (echo) {
+                echo.disconnect();
+                echo = null;
+                statusIndicator.className = 'status disconnected';
+                statusIndicator.textContent = 'Status: Disconnected';
+                addMessage('Manually disconnected from WebSocket server');
+            } else {
+                addMessage('Not currently connected', 'warning');
+            }
+        }
+
+        function testEvent() {
+            addMessage('Sending test event request to server...');
+
+            fetch('/api/test-broadcast', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                addMessage(`Server response: ${JSON.stringify(data)}`);
+            })
+            .catch(error => {
+                addMessage(`Error sending test event: ${error.message}`, 'error');
+            });
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (echo) {
+                echo.disconnect();
+            }
+        });
+    </script>
+</body>
+</html>

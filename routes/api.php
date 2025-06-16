@@ -15,7 +15,7 @@ Route::post('/orders', [OrderController::class, 'store']);
 Route::get('/analytics', [AnalyticsController::class, 'index']);
 Route::get('/recommendations', [RecommendationController::class, 'index']);
 
-// Test route for WebSocket broadcasting
+// Test routes for WebSocket broadcasting
 Route::get('/test-broadcast', function () {
     try {
         // Get the first product from the database
@@ -57,6 +57,68 @@ Route::get('/test-broadcast', function () {
                 'quantity' => $testOrder->quantity,
                 'price' => $testOrder->price,
                 'total' => $testOrder->total
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Broadcast failed: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+Route::post('/test-broadcast', function () {
+    try {
+        // Get the first product from the database
+        $product = \App\Models\Product::first();
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No products found. Run: php artisan db:seed --class=ProductSeeder'
+            ], 404);
+        }
+
+        // Calculate a random quantity between 1 and 5
+        $quantity = rand(1, 5);
+
+        // Random price between 50 and 200
+        $price = round(rand(5000, 20000) / 100, 2);
+
+        // Create a temporary test order in the database
+        $testOrder = \App\Models\Order::create([
+            'product_id' => $product->id,
+            'quantity' => $quantity,
+            'price' => $price,
+            'order_date' => now(),
+        ]);
+
+        // Load the product relationship
+        $testOrder->load('product');
+
+        // Broadcast the event
+        event(new \App\Events\NewOrderCreated($testOrder));
+
+        // Also broadcast analytics update
+        event(new \App\Events\AnalyticsUpdated([
+            'new_order' => [
+                'id' => $testOrder->id,
+                'product' => $testOrder->product->name,
+                'quantity' => $testOrder->quantity,
+                'price' => $testOrder->price,
+                'total' => $testOrder->quantity * $testOrder->price,
+                'date' => now()->toDateTimeString()
+            ]
+        ]));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Test broadcast sent successfully!',
+            'data' => [
+                'id' => $testOrder->id,
+                'product_name' => $testOrder->product->name,
+                'quantity' => $testOrder->quantity,
+                'price' => $testOrder->price,
+                'total' => $testOrder->quantity * $testOrder->price
             ]
         ]);
     } catch (\Exception $e) {

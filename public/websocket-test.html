@@ -27,10 +27,13 @@
                     statusDiv.style.color = 'green';
                     messagesDiv.innerHTML += '<div>Connection opened</div>';
 
-                    // Subscribe to channel
+                    // First send auth info
                     ws.send(JSON.stringify({
                         event: 'pusher:subscribe',
-                        data: { channel: 'sales-data' }
+                        data: {
+                            auth: '',
+                            channel: 'sales-data'
+                        }
                     }));
                 };
 
