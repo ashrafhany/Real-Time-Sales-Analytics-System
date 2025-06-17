@@ -1,14 +1,27 @@
 <?php
 
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\RecommendationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// Authentication Routes
+Route::post('/auth/register', [AuthController::class, 'register']);
+Route::post('/auth/login', [AuthController::class, 'login']);
+
+// Protected Routes
+Route::middleware('auth:sanctum')->group(function () {
+    // User authentication
+    Route::get('/user', [AuthController::class, 'me']);
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
+    
+    // Orders
+    Route::get('/orders', [\App\Http\Controllers\API\OrdersController::class, 'index']);
+    Route::post('/orders', [\App\Http\Controllers\API\OrdersController::class, 'store']);
+    Route::get('/orders/{id}', [\App\Http\Controllers\API\OrdersController::class, 'show']);
+});
 
 // Sales Management APIs
 Route::post('/orders', [OrderController::class, 'store']);
